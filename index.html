@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Responsive Site</title>
+    
+    <style>
+        /* --- CSS STYLES --- */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --accent-color: #007bff;
+            --card-bg: #f4f4f4;
+            --modal-overlay: rgba(0, 0, 0, 0.8);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --accent-color: #3793ff;
+            --card-bg: #2d2d2d;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        nav {
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 90%;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        /* Form Styles */
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .error-msg {
+            color: #ff4d4d;
+            font-size: 0.85rem;
+            height: 1rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none; 
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.is-visible { display: flex; }
+
+        .modal-content {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 8px;
+            position: relative;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            color: var(--text-color);
+            font-size: 1.5rem;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h1>Project Delta</h1>
+        <button id="theme-toggle" aria-label="Toggle dark mode">🌓 Switch Theme</button>
+    </nav>
+
+    <section class="container">
+        <h2>Feature 1: Visual Lightbox</h2>
+        <p>Click the button below to trigger a focus-managed accessible modal.</p>
+        <button class="modal-trigger">Open Gallery Preview</button>
+    </section>
+
+    <section class="container">
+        <h2>Feature 2: Smart Validation</h2>
+        <form id="contact-form">
+            <label for="email">Enter your email for updates:</label>
+            <input type="email" id="email" placeholder="hello@example.com" required>
+            <span id="email-error" class="error-msg" aria-live="polite"></span>
+            <button type="submit" style="margin-top: 10px;">Sign Up</button>
+        </form>
+    </section>
+
+    <div class="modal" id="image-modal" aria-hidden="true" role="dialog">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Close modal">&times;</button>
+            <img src="https://picsum.photos/400/250" alt="Random placeholder" style="width:100%; border-radius: 4px;">
+            <h3>Interactive Modal</h3>
+            <p>This popup handles focus trapping and closes with the ESC key for better accessibility.</p>
+        </div>
+    </div>
+
+    <script>
+        // 1. PERSISTENT DARK MODE
+        const themeToggle = document.querySelector('#theme-toggle');
+        const currentTheme = localStorage.getItem('theme');
+
+        if (currentTheme) {
+            document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            let targetTheme = (theme === 'dark') ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', targetTheme);
+            localStorage.setItem('theme', targetTheme);
+        });
+
+        // 2. ACCESSIBLE MODAL LOGIC
+        const modal = document.querySelector('#image-modal');
+        const trigger = document.querySelector('.modal-trigger');
+        const closeBtn = document.querySelector('.close-btn');
+
+        function toggleModal(isOpen) {
+            modal.classList.toggle('is-visible', isOpen);
+            modal.setAttribute('aria-hidden', !isOpen);
+            if (isOpen) {
+                closeBtn.focus();
+            }
+        }
+
+        trigger.addEventListener('click', () => toggleModal(true));
+        closeBtn.addEventListener('click', () => toggleModal(false));
+
+        // Close on outside click or ESC key
+        window.addEventListener('click', (e) => { if(e.target === modal) toggleModal(false); });
+        window.addEventListener('keydown', (e) => { if(e.key === 'Escape') toggleModal(false); });
+
+        // 3. REAL-TIME FORM VALIDATION
+        const emailInput = document.querySelector('#email');
+        const errorDisplay = document.querySelector('#email-error');
+
+        emailInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (value !== "" && !emailPattern.test(value)) {
+                errorDisplay.textContent = "Please enter a valid email address.";
+                emailInput.style.borderColor = "#ff4d4d";
+            } else {
+                errorDisplay.textContent = "";
+                emailInput.style.borderColor = "";
+            }
+        });
+
+        // Prevent form submission for demo purposes
+        document.querySelector('#contact-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert("Form submitted successfully!");
+        });
+    </script>
+</body>
+</html>
